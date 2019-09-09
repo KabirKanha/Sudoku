@@ -259,7 +259,8 @@ class Solver {
                                 buildup = new StringBuilder();
                                 k++;
                             } else {
-                                buildup.append(temp.charAt(j));
+                                if (temp.charAt(j) != '0')
+                                    buildup.append(temp.charAt(j));
                             }
                             if (j == temp.length() - 1) {
                                 buttons[i][k].setText(buildup.toString());
