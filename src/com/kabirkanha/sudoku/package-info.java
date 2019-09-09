@@ -14,9 +14,21 @@ If the assumption turns out to be incorrect, we backtrack and choose the other c
 It is efficiently able to handle multi level backtracking and the algorithm is far more 'intelligent' than any pure backtracking approach.
 The solving speed can be varied using the argument in the Thread.sleep() method. It enable us to view the intermediate steps, especially for backtracking.
 
+Colour coded comprehensive logs are printed at every step of the way.
+
+Button functionality:
+
+FILE INPUT - Opens the File chooser and allows the user to select a single CSV file for input.
+EDIT - Enables the grid buttons; allows edits to the grid.
+LOCK - Disables edits to the grid and saves a copy of the current state.
+SOLVE - Solves the Sudoku using Constraint Propagation and Backtracking.
+RESET - Resets the grid to the status at the last 'lock'.
+NEW GRID - Starts everything over.
+VERIFY - Effectively verifies whether the Sudoku has been solved correctly or not.
+
 Author: Kabir Kanha Arora
 Course: CSD 311 - Artificial Intelligence
 Date: 09-Sep-19
- */
+*/
 
 package com.kabirkanha.sudoku;
