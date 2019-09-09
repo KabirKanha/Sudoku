@@ -317,11 +317,33 @@ class Solver {
                 //Update cell sets from input.
                 updateFromGrid();
                 backtrackCnt = 0;
-                boolean flag = true;
                 try {
-                    solveWithBacktrack();
+                    SwingWorker<String, String> sw = new SwingWorker<>() {
+                        @Override
+                        protected String doInBackground() {
+                            btn_reset.setEnabled(false);
+                            btn_new.setEnabled(false);
+                            btn_edit.setEnabled(false);
+                            btn_solve.setEnabled(false);
+                            if (solveWithBacktrack()) {
+                                System.out.println(ConsoleColors.GREEN_BOLD + "\nSOLVE COMPLETED." + ConsoleColors.RESET);
+                                System.out.println(ConsoleColors.RED + "Backtracks: " + backtrackCnt + ConsoleColors.RESET);
+                                printSets();
+                                btn_new.setEnabled(true);
+                                btn_reset.setEnabled(true);
+                                btn_verify.setEnabled(true);
+                                btn_edit.setEnabled(true);
+                                btn_solve.setEnabled(true);
+                            } else {
+                                getGrid();
+                                System.out.println(ConsoleColors.RED_BOLD + "\nSOLVE ABORTED." + ConsoleColors.RESET);
+                                JOptionPane.showMessageDialog(mainframe, "Invalid Input.\nSOLVE ABORTED.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                            }
+                            return "";
+                        }
+                    };
+                    sw.execute();
                 } catch (StackOverflowError t) {
-                    flag = false;
                     for (int i = 0; i < size; ++i) {
                         for (int j = 0; j < size; ++j) {
                             buttons[i][j].setText("");
@@ -330,17 +352,12 @@ class Solver {
                         }
                     }
                     System.out.println("\n\nSOLVE ABORTED.");
-                    JOptionPane.showMessageDialog(mainframe, "Too few values entered.\nStack will overflow.\nSOLVE ABORTED.", "Stack Overflow Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(mainframe, "Invalid Input\nSOLVE ABORTED.", "ERROR", JOptionPane.ERROR_MESSAGE);
                 }
-                if (flag) {
-                    btn_verify.setEnabled(true);
-                    printSets();
-                    System.out.println(ConsoleColors.GREEN_BOLD + "\nSOLVE COMPLETED." + ConsoleColors.RESET);
-                }
-                System.out.println(ConsoleColors.RED + "Backtracks: " + backtrackCnt + ConsoleColors.RESET);
             } else {
                 JOptionPane.showMessageDialog(mainframe, "Please enter at least 16 values.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
             }
+
         });
 
         btn_reset.addActionListener(e -> {
@@ -363,39 +380,11 @@ class Solver {
         });
 
         btn_verify.addActionListener(e -> {
-            //Rows and Columns
-            boolean flag = true;
-            for (int i = 0; i < size; ++i) {
-                int[] cnt_r = new int[size];
-                int[] cnt_c = new int[size];
-                valueCounter(i, cnt_r, cnt_c);
-                for (int x = 0; x < size; ++x) {
-                    if (cnt_r[x] != 1 || cnt_c[x] != 1) {
-                        flag = false;
-                    }
-                }
-            }
-
-            //Grid
-            for (int i1 = 0; i1 < size / gridSize; ++i1) {
-                for (int j1 = 0; j1 < size / gridSize; ++j1) {
-                    int[] cnt = new int[size];
-                    gridValueCounter(cnt, i1, j1);
-                    for (int x = 0; x < size; ++x) {
-                        if (cnt[x] != 1) {
-                            flag = false;
-                        }
-                    }
-                }
-            }
-
-            if (countConfirmed() < (size * size))
-                flag = false;
-
-            if (flag)
+            if (verify()) {
                 JOptionPane.showMessageDialog(mainframe, "Success! Sudoku solved correctly!");
-            else
+            } else {
                 JOptionPane.showMessageDialog(mainframe, "Oh no! Sudoku not solved.");
+            }
         });
     }
 
@@ -574,6 +563,7 @@ class Solver {
      * Updates the sudoku grid with cell values that are confirmed.
      */
     private void publish() {
+
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 if (cellSets.get(i).get(j).size() == 1) {
@@ -681,6 +671,12 @@ class Solver {
     private boolean solveWithBacktrack() {
         if (checkIfFalse())
             return false;
+        try {
+            //Change the number here to change the solve speed.
+            Thread.sleep(75);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         if (countConfirmed() < (size * size))
             solve();
         else
@@ -698,11 +694,11 @@ class Solver {
                 }
             }
 
-            if(!(makeAGuess(0)))
+            if (!(makeAGuess(0)))
                 return false;
             if (!(solveWithBacktrack())) {
                 restoreValues(cellSetsSaved, flagSaved);
-                if(!(makeAGuess(1)))
+                if (!(makeAGuess(1)))
                     return false;
 
                 if (!(solveWithBacktrack())) {
@@ -798,6 +794,8 @@ class Solver {
     private void solve() {
         while (countFlags() < countConfirmed()) {
             updateFromConfirmed();
+            if (!(checkIfFalse()))
+                publish();
             onlyChoice();
             publish();
             if (checkIfFalse())
@@ -918,5 +916,38 @@ class Solver {
                 }
             }
         }
+    }
+
+    private boolean verify() {
+        //Rows and Columns
+        boolean flag = true;
+        for (int i = 0; i < size; ++i) {
+            int[] cnt_r = new int[size];
+            int[] cnt_c = new int[size];
+            valueCounter(i, cnt_r, cnt_c);
+            for (int x = 0; x < size; ++x) {
+                if (cnt_r[x] != 1 || cnt_c[x] != 1) {
+                    flag = false;
+                }
+            }
+        }
+
+        //Grid
+        for (int i1 = 0; i1 < size / gridSize; ++i1) {
+            for (int j1 = 0; j1 < size / gridSize; ++j1) {
+                int[] cnt = new int[size];
+                gridValueCounter(cnt, i1, j1);
+                for (int x = 0; x < size; ++x) {
+                    if (cnt[x] != 1) {
+                        flag = false;
+                    }
+                }
+            }
+        }
+
+        if (countConfirmed() < (size * size))
+            flag = false;
+
+        return flag;
     }
 }
