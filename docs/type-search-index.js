@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"com.kabirkanha.sudoku","l":"Choice"},{"p":"com.kabirkanha.sudoku","l":"ConsoleColors"},{"p":"com.kabirkanha.sudoku","l":"Main"},{"p":"com.kabirkanha.sudoku","l":"Solver"}]
