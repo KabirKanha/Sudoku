@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,6 +31,16 @@ class Solver {
      * The main frame that contains the Sudoku grid.
      */
     private JFrame mainframe = new JFrame();
+
+    /**
+     * Stack to store the row IDs of cells that have been guessed; helpful while backtracking.
+     */
+    private Stack<Integer> rowIds = new Stack<>();
+
+    /**
+     * Stack to store the column IDs of cells that have been guessed; helpful while backtracking.
+     */
+    private Stack<Integer> colIds = new Stack<>();
 
     /**
      * Sets the size of the whole grid.
@@ -74,10 +85,7 @@ class Solver {
      * 2D integer array to store the grid data in numeric form.
      */
     private int[][] grid = new int[size][size];
-    /**
-     * 2D integer array to store number of backtracks from a particular cell.
-     */
-    private int[][] flagBack = new int[size][size];
+
     /**
      * Stores the total number of backtracks, to report after the solve.
      */
@@ -308,6 +316,7 @@ class Solver {
                 btn_reset.setEnabled(true);
                 //Update cell sets from input.
                 updateFromGrid();
+                backtrackCnt = 0;
                 boolean flag = true;
                 try {
                     solveWithBacktrack();
@@ -666,42 +675,55 @@ class Solver {
 
     /**
      * Function to solve the Sudoku grid; uses backtracking iff regular constraint propagation techniques are inadequate to find the solution.
+     *
+     * @return false if sudoku enters an invalid state; true if solved.
      */
-    private void solveWithBacktrack() {
+    private boolean solveWithBacktrack() {
+        if (checkIfFalse())
+            return false;
         if (countConfirmed() < (size * size))
             solve();
+        else
+            return true;
         if (countConfirmed() < (size * size)) {
+
+            //Create restore point
             ArrayList<ArrayList<HashSet<Integer>>> cellSetsSaved = new ArrayList<>();
-            boolean[][] flagSaved = new boolean[size][size];
-            String[][] textSaved = new String[size][size];
-            int[][] gridSaved = new int[size][size];
             initialiseSet(cellSetsSaved);
+            boolean[][] flagSaved = new boolean[size][size];
             for (int i = 0; i < size; ++i) {
                 for (int j = 0; j < size; ++j) {
                     cellSetsSaved.get(i).get(j).addAll(cellSets.get(i).get(j));
                     flagSaved[i][j] = flag[i][j];
-                    textSaved[i][j] = buttons[i][j].getText();
-                    gridSaved[i][j] = grid[i][j];
                 }
             }
-            makeAGuess(0);
-            solve();
-            if (checkIfFalse()) {
-                backtrackCnt++;
-                System.out.println(ConsoleColors.RED_BOLD + "\n\tBACKTRACK!" + ConsoleColors.RESET);
-                for (int i = 0; i < size; ++i) {
-                    for (int j = 0; j < size; ++j) {
-                        cellSets.get(i).get(j).clear();
-                        cellSets.get(i).get(j).addAll(cellSetsSaved.get(i).get(j));
-                        flag[i][j] = flagSaved[i][j];
-                        buttons[i][j].setText(textSaved[i][j]);
-                        grid[i][j] = gridSaved[i][j];
-                    }
+
+            if(!(makeAGuess(0)))
+                return false;
+            if (!(solveWithBacktrack())) {
+                restoreValues(cellSetsSaved, flagSaved);
+                if(!(makeAGuess(1)))
+                    return false;
+
+                if (!(solveWithBacktrack())) {
+                    backtrackCnt++;
+                    System.out.println(ConsoleColors.RED_BOLD + "\n\tBACKTRACK!" + ConsoleColors.RESET);
+                    restoreValues(cellSetsSaved, flagSaved);
+                    return false;
                 }
-                makeAGuess(1);
-                solve();
             }
-            solveWithBacktrack();
+        } else
+            return true;
+        return true;
+    }
+
+    private void restoreValues(ArrayList<ArrayList<HashSet<Integer>>> cellSetsSaved, boolean[][] flagSaved) {
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                cellSets.get(i).get(j).clear();
+                cellSets.get(i).get(j).addAll(cellSetsSaved.get(i).get(j));
+                flag[i][j] = flagSaved[i][j];
+            }
         }
     }
 
@@ -709,31 +731,51 @@ class Solver {
      * Function that makes a guess in a cell that has only two possible values.
      *
      * @param type signifies whether a guess has already been made or not
+     * @return false if the sudoku runs into an invalid state; true if not.
      */
-    private void makeAGuess(int type) {
+    private boolean makeAGuess(int type) {
 
         boolean flagDup = false;
         int l = 1, r = 2;
         if (type == 1) {
             l = 4;
             r = 5;
-        }
-        for (int i = 0; i < size; ++i) {
-            for (int j = 0; j < size; ++j) {
-                if (cellSets.get(i).get(j).size() == 2 && flagBack[i][j] == type && !flagDup) {
-                    String temp = cellSets.get(i).get(j).toString().substring(l, r);
-                    cellSets.get(i).get(j).clear();
-                    cellSets.get(i).get(j).add(Integer.parseInt(temp));
-                    buttons[i][j].setText(temp);
-                    grid[i][j] = Integer.parseInt(temp);
-                    flagBack[i][j]++;
-                    flagDup = true;
-                    if (type == 0)
+            int i = rowIds.pop();
+            int j = colIds.pop();
+            guessMaker(l, r, i, j);
+            System.out.println(ConsoleColors.YELLOW_BOLD + "\n\tCorrecting the incorrect guess at cell (" + (i + 1) + "," + (j + 1) + ")" + ConsoleColors.RESET);
+        } else {
+            for (int i = 0; i < size; ++i) {
+                for (int j = 0; j < size; ++j) {
+                    if (cellSets.get(i).get(j).size() == 2 && !flagDup) {
+                        guessMaker(l, r, i, j);
+                        flagDup = true;
                         System.out.println(ConsoleColors.YELLOW_BOLD + "\n\tMaking a guess at cell (" + (i + 1) + "," + (j + 1) + ")" + ConsoleColors.RESET);
-                    break;
+                        rowIds.push(i);
+                        colIds.push(j);
+                        break;
+                    }
                 }
             }
+            if (!flagDup)
+                return false;
         }
+        printSets();
+        return true;
+    }
+
+    /**
+     * Helper function to makeAGuess; created to avoid code duplication.
+     *
+     * @param l start of the substring
+     * @param r end of the substring
+     * @param i row index of the cell
+     * @param j column index of the cell
+     */
+    private void guessMaker(int l, int r, int i, int j) {
+        String temp = cellSets.get(i).get(j).toString().substring(l, r);
+        cellSets.get(i).get(j).clear();
+        cellSets.get(i).get(j).add(Integer.parseInt(temp));
     }
 
     /**
@@ -756,7 +798,6 @@ class Solver {
     private void solve() {
         while (countFlags() < countConfirmed()) {
             updateFromConfirmed();
-            publish();
             onlyChoice();
             publish();
             if (checkIfFalse())
@@ -841,7 +882,6 @@ class Solver {
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 flag[i][j] = false;
-                flagBack[i][j] = 0;
             }
         }
     }
