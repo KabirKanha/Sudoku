@@ -259,7 +259,7 @@ class Solver {
                                 buildup = new StringBuilder();
                                 k++;
                             } else {
-                                if (temp.charAt(j) != '0')
+//                                if (temp.charAt(j) != '0')
                                     buildup.append(temp.charAt(j));
                             }
                             if (j == temp.length() - 1) {
@@ -339,6 +339,13 @@ class Solver {
                                 getGrid();
                                 System.out.println(ConsoleColors.RED_BOLD + "\nSOLVE ABORTED." + ConsoleColors.RESET);
                                 JOptionPane.showMessageDialog(mainframe, "Invalid Input.\nSOLVE ABORTED.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                                //Revert to last locked state.
+                                getGrid();
+
+                                //Reset all cell sets.
+                                addAllValuesToSet();
+
+                                btn_edit.setEnabled(true);
                             }
                             return "";
                         }
@@ -354,6 +361,13 @@ class Solver {
                     }
                     System.out.println("\n\nSOLVE ABORTED.");
                     JOptionPane.showMessageDialog(mainframe, "Invalid Input\nSOLVE ABORTED.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                    //Revert to last locked state.
+                    getGrid();
+
+                    //Reset all cell sets.
+                    addAllValuesToSet();
+
+                    btn_edit.setEnabled(true);
                 }
             } else {
                 JOptionPane.showMessageDialog(mainframe, "Please enter at least 16 values.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
