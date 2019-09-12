@@ -259,7 +259,7 @@ class Solver {
                                 buildup = new StringBuilder();
                                 k++;
                             } else {
-//                                if (temp.charAt(j) != '0')
+                                if (temp.charAt(j) != '0')
                                     buildup.append(temp.charAt(j));
                             }
                             if (j == temp.length() - 1) {
@@ -281,6 +281,8 @@ class Solver {
                             grid[i][j] = 0;
                     }
                 }
+                if (countGridValues() == size * size)
+                    btn_verify.setEnabled(true);
             }
         });
 
@@ -298,6 +300,7 @@ class Solver {
             for (int i = 0; i < size; ++i) {
                 for (int j = 0; j < size; ++j) {
                     buttons[i][j].setEnabled(false);
+                    buttons[i][j].setForeground(Color.GRAY);
                     if (!(buttons[i][j].getText().equals(""))) {
                         grid[i][j] = Integer.parseInt(buttons[i][j].getText());
                         buttons[i][j].setForeground(Color.BLACK);
@@ -398,7 +401,7 @@ class Solver {
             if (verify()) {
                 JOptionPane.showMessageDialog(mainframe, "Success! Sudoku solved correctly!");
             } else {
-                JOptionPane.showMessageDialog(mainframe, "Oh no! Sudoku not solved.");
+                JOptionPane.showMessageDialog(mainframe, "Oh no! Incorrect Sudoku");
             }
         });
     }
@@ -460,6 +463,8 @@ class Solver {
             JButton[] temp = new JButton[1];
             temp[0] = button;
             new Choice(temp, row, col, buttons, mainframe);
+            if (countGridValues() == size * size)
+                btn_verify.setEnabled(true);
         });
     }
 
@@ -587,6 +592,12 @@ class Solver {
                 }
             }
         }
+        try {
+            //Change the number here to change the solve speed.
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         printSets();
     }
 
@@ -602,6 +613,22 @@ class Solver {
                 if (cellSets.get(i).get(j).size() == 1) {
                     cnt++;
                 }
+            }
+        }
+        return cnt;
+    }
+
+    /**
+     * Counts the number of cells in the grid that have a value assigned to them.
+     *
+     * @return the count
+     */
+    private int countGridValues() {
+        int cnt = 0;
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                if (!(buttons[i][j].getText().equals("")) && (!buttons[i][j].getText().equals("0")))
+                    cnt++;
             }
         }
         return cnt;
@@ -686,12 +713,7 @@ class Solver {
     private boolean solveWithBacktrack() {
         if (checkIfFalse())
             return false;
-        try {
-            //Change the number here to change the solve speed.
-            Thread.sleep(75);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         if (countConfirmed() < (size * size))
             solve();
         else
