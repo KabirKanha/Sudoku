@@ -1,8 +1,9 @@
 # Sudoku
-<strong>This project solves any given Sudoku.</strong>
+ <strong>This project solves any given Sudoku.</strong>
  <br><br>It accepts manual input or that in the form of a CSV file.
  <br>You could also use a mixture of both.
  <br>We first use <strong>Constraint Propagation</strong> to solve as much of the Sudoku as we can.
+ <br>The <strong>heuristic</strong> used here is the number of remaining candidates in a cell.
  <br>The solver first runs a function that uses the cells currently in the grid to eliminate candidates from its corresponding row, column and sub-grid.
  <br>Lone candidates are filled into the grid.
  <br>It then checks for every row, column and sub-grid to see if there exists any candidate that is present at only one cell location within the row/column/sub-grid.
