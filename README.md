@@ -18,6 +18,7 @@
  <br>It is efficiently able to handle multi level backtracking and the algorithm is far more 'intelligent' than any pure backtracking approach.
  <br>The solving speed can be varied using the argument in the <em>Thread.sleep()</em> method. It enable us to view the intermediate steps, especially for backtracking.
  <br>
+ <br>This code is in Java.
  <br>Colour coded comprehensive logs are printed at every step of the way.
  <br>
  <br><strong>Button functionality:</strong>
